@@ -12,6 +12,12 @@ packages = [
 python = "^3.11"
 uplink = "^0.9.7"
 
+[tool.poetry.urls]
+homepage = "https://github.com/f5xc-TenantOps/f5xc-tops-py-client"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.publish]
+repository = "github"
