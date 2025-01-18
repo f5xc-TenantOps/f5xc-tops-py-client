@@ -1,4 +1,4 @@
-name: Publish Python Package to GitHub Packages
+name: Publish Python Package to PyPI
 
 on:
   push:
@@ -6,34 +6,30 @@ on:
       - main
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
+      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Python environment
+      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # Install Poetry
+      # Step 3: Install Poetry
       - name: Install Poetry
         run: pip install poetry
 
-      # Configure Poetry for GitHub Packages
-      - name: Configure Poetry for GitHub Packages
-        run: |
-          poetry config repositories.github https://upload.pypi.org/legacy/
-          poetry config pypi-token.github ${{ secrets.GITHUB_TOKEN }}
-
-      # Build the package
+      # Step 4: Build the package
       - name: Build the package
         run: poetry build
 
-      # Publish the package
-      - name: Publish to GitHub Packages
-        run: poetry publish --repository github
+      # Step 5: Publish the package to PyPI
+      - name: Publish to PyPI
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
+        run: poetry publish --username __token__ --password $POETRY_PYPI_TOKEN_PYPI
