@@ -33,7 +33,7 @@ class Site(Consumer):
     @post('/api/config/namespaces/{namespace}/sites/{name}/upgrade_sw')
     def upgrade_sw(self, payload: Body, name: Path, namespace: Path ='system'):
         """
-        Upgrade Site OS
+        Upgrade Site Software
         Use upgrade_payload() to build Body
         """
 
