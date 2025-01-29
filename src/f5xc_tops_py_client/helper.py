@@ -43,8 +43,8 @@ def xc_extract_items(json_data: dict):
             return json_data[key]
     return json_data
 
-@response_handler
-def xc_response_handler(response):
+#@response_handler
+def xc_response_handler_old(response):
     """Function to handle HTTP responses"""
     if 200 <= response.status_code < 300:
         try:
@@ -52,6 +52,23 @@ def xc_response_handler(response):
         except Exception as e:
             raise TopsXCException("Response not JSON") from e
     raise TopsXCException("API ResponseCode")
+
+@response_handler
+def xc_response_handler(response):
+    """Function to handle HTTP responses"""
+    if 200 <= response.status_code < 300:
+        try:
+            return response.json()
+        except Exception as e:
+            raise TopsXCException(f"Response not JSON: {str(e)}") from e
+
+    try:
+        error_data = response.json()
+        error_message = response.text
+    except Exception:
+        error_message = response.text 
+
+    raise TopsXCException(f"API ResponseCode {response.status_code}: {error_message}")
 
 @error_handler(requires_consumer=True)
 def xc_error_handler(consumer):
