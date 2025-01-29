@@ -85,4 +85,3 @@ class User(Consumer):
             "group_names": group_names,
             "username": user
         }
-    

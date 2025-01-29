@@ -11,3 +11,6 @@ from .tenant import Tenant as tenant
 from .registration import Registration as registration
 from .xcsite import Site as site
 from .cert import Cert as cert
+from .origin_pool import OriginPool as origin_pool
+from .load_balancer import HTTPLoadBalancer as http_loadbalancer
+from .load_balancer import TCPLoadBalancer as tcp_loadbalancer
