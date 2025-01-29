@@ -63,11 +63,13 @@ class OriginPool(Consumer):
         description: str = "",
         labels: dict = None,
         disable: bool = False,
+        same_as_endpoint_port: dict = None,  # Changed type to dict
     ):
         """
         Construct the full payload for an Origin Pool.
 
         :param name: Name of the Origin Pool.
+        :param namespace: Namespace where the pool is created.
         :param origin_servers: List of origin server objects.
         :param loadbalancer_algorithm: Load balancing algorithm (default: "ROUND_ROBIN").
         :param endpoint_selection: Endpoint selection policy (default: "LOCAL_PREFERRED").
@@ -75,6 +77,7 @@ class OriginPool(Consumer):
         :param description: Description of the Origin Pool.
         :param labels: Labels to tag the Origin Pool (optional).
         :param disable: Whether to disable the Origin Pool (default: False).
+        :param same_as_endpoint_port: Pass `{}` if using the same port as the endpoint.
         :return: Dictionary representing the Origin Pool payload.
         """
         if labels is None:
@@ -82,6 +85,9 @@ class OriginPool(Consumer):
 
         if healthcheck is None:
             healthcheck = []
+
+        if same_as_endpoint_port is None:
+            same_as_endpoint_port = {}  # Defaulting to empty dict
 
         return {
             "metadata": {
@@ -96,6 +102,7 @@ class OriginPool(Consumer):
                 "loadbalancer_algorithm": loadbalancer_algorithm,
                 "endpoint_selection": endpoint_selection,
                 "healthcheck": healthcheck,
+                "same_as_endpoint_port": same_as_endpoint_port,  # Now correctly an empty dict
             },
         }
 
