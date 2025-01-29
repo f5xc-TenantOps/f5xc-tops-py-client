@@ -57,13 +57,15 @@ class OriginPool(Consumer):
         name: str,
         namespace: str,
         origin_servers: list,
-        loadbalancer_algorithm: str = "ROUND_ROBIN",
+        port: int = 443,
+        loadbalancer_algorithm: str = "LB_OVERRIDE",
         endpoint_selection: str = "LOCAL_PREFERRED",
         healthcheck: list = None,
         description: str = "",
         labels: dict = None,
         disable: bool = False,
-        same_as_endpoint_port: dict = None,  # Changed type to dict
+        same_as_endpoint_port: dict = None,
+        no_tls: dict = None,  # Added no_tls parameter
     ):
         """
         Construct the full payload for an Origin Pool.
@@ -71,13 +73,15 @@ class OriginPool(Consumer):
         :param name: Name of the Origin Pool.
         :param namespace: Namespace where the pool is created.
         :param origin_servers: List of origin server objects.
-        :param loadbalancer_algorithm: Load balancing algorithm (default: "ROUND_ROBIN").
+        :param port: Top-level port for the origin pool (default: 443).
+        :param loadbalancer_algorithm: Load balancing algorithm (default: "LB_OVERRIDE").
         :param endpoint_selection: Endpoint selection policy (default: "LOCAL_PREFERRED").
         :param healthcheck: List of healthcheck references (optional).
         :param description: Description of the Origin Pool.
         :param labels: Labels to tag the Origin Pool (optional).
         :param disable: Whether to disable the Origin Pool (default: False).
         :param same_as_endpoint_port: Pass `{}` if using the same port as the endpoint.
+        :param no_tls: Pass `{}` to disable TLS, or `None` to enable TLS (default: `{}`).
         :return: Dictionary representing the Origin Pool payload.
         """
         if labels is None:
@@ -87,7 +91,22 @@ class OriginPool(Consumer):
             healthcheck = []
 
         if same_as_endpoint_port is None:
-            same_as_endpoint_port = {}  # Defaulting to empty dict
+            same_as_endpoint_port = {}
+
+        spec = {
+            "origin_servers": [
+                {k: v for k, v in server.items() if k != "name"}
+                for server in origin_servers
+            ],
+            "port": port,
+            "loadbalancer_algorithm": loadbalancer_algorithm,
+            "endpoint_selection": endpoint_selection,
+            "healthcheck": healthcheck,
+            "same_as_endpoint_port": same_as_endpoint_port,
+        }
+
+        if no_tls is not None:
+            spec["no_tls"] = no_tls
 
         return {
             "metadata": {
@@ -97,13 +116,7 @@ class OriginPool(Consumer):
                 "labels": labels,
                 "disable": disable,
             },
-            "spec": {
-                "origin_servers": origin_servers,
-                "loadbalancer_algorithm": loadbalancer_algorithm,
-                "endpoint_selection": endpoint_selection,
-                "healthcheck": healthcheck,
-                "same_as_endpoint_port": same_as_endpoint_port,  # Now correctly an empty dict
-            },
+            "spec": spec,
         }
 
     @staticmethod

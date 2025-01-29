@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "f5xc_tops_py_client"
-version = "0.2.5"
+version = "0.2.6"
 description = "Python client for F5 Distributed Cloud API used by f5xc-tenantOps"
 authors = ["Kevin Reynolds <k.reynolds@f5.com>"]
 readme = "README.md"
