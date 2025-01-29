@@ -55,32 +55,33 @@ class OriginPool(Consumer):
     @staticmethod
     def create_payload(
         name: str,
-        origins: list,
-        load_balancing_method: str = "ROUND_ROBIN",
-        health_checks: list = None,
+        namespace: str,
+        origin_servers: list,
+        loadbalancer_algorithm: str = "ROUND_ROBIN",
+        endpoint_selection: str = "LOCAL_PREFERRED",
+        healthcheck: list = None,
         description: str = "",
         labels: dict = None,
-        namespace: str = "system",
+        disable: bool = False,
     ):
         """
-        Create a payload for Origin Pool.
+        Construct the full payload for an Origin Pool.
 
-        :param name: Name of the origin pool.
-        :param origins: List of origin configurations built with build_origins().
-        :param load_balancing_method: Load balancing method (e.g., "ROUND_ROBIN", "LEAST_CONNECTIONS").
-        :param health_checks: List of health checks to attach to the origin pool.
-        :param description: Description of the origin pool.
-        :param labels: Labels to tag the origin pool.
-        :param namespace: Namespace for the origin pool.
-        :return: Dictionary payload for the API request.
+        :param name: Name of the Origin Pool.
+        :param origin_servers: List of origin server objects.
+        :param loadbalancer_algorithm: Load balancing algorithm (default: "ROUND_ROBIN").
+        :param endpoint_selection: Endpoint selection policy (default: "LOCAL_PREFERRED").
+        :param healthcheck: List of healthcheck references (optional).
+        :param description: Description of the Origin Pool.
+        :param labels: Labels to tag the Origin Pool (optional).
+        :param disable: Whether to disable the Origin Pool (default: False).
+        :return: Dictionary representing the Origin Pool payload.
         """
         if labels is None:
             labels = {}
-        if health_checks is None:
-            health_checks = []
 
-        # Ensure the load balancing method is uppercase
-        load_balancing_method = load_balancing_method.upper()
+        if healthcheck is None:
+            healthcheck = []
 
         return {
             "metadata": {
@@ -88,56 +89,104 @@ class OriginPool(Consumer):
                 "namespace": namespace,
                 "description": description,
                 "labels": labels,
-                "annotations": {},
+                "disable": disable,
             },
             "spec": {
-                "load_balancing": {
-                    "method": load_balancing_method,
-                },
-                "origins": origins,
-                "health_checks": health_checks,
+                "origin_servers": origin_servers,
+                "loadbalancer_algorithm": loadbalancer_algorithm,
+                "endpoint_selection": endpoint_selection,
+                "healthcheck": healthcheck,
             },
         }
 
     @staticmethod
-    def build_origins(
+    def build_origin_server(
         name: str,
-        ip: str = None,
-        hostname: str = None,
         port: int = 443,
-        weight: int = 1,
-        tls_enabled: bool = False,
-        connection_timeout: int = 5,
-        max_connections: int = 100,
+        public_ip: str = None,
+        public_name: str = None,
+        private_ip: str = None,
+        private_name: str = None,
+        k8s_service: dict = None,
+        custom_endpoint: dict = None,
+        cbip_service: str = None,
+        consul_service: dict = None,
+        vn_private_ip: str = None,
+        vn_private_name: str = None,
+        refresh_interval: int = 300,
+        site_locator: dict = None,
+        labels: dict = None,
     ):
         """
-        Build an origin configuration for an origin pool.
+        Build an origin server configuration for an Origin Pool.
 
-        :param name: Unique name for the origin.
-        :param ip: IP address of the origin (optional).
-        :param hostname: Hostname of the origin (optional).
-        :param port: Port of the origin (default: 443).
-        :param weight: Weight for load balancing (default: 1).
-        :param tls_enabled: Whether TLS is enabled for the origin (default: False).
-        :param connection_timeout: Connection timeout in seconds (default: 5).
-        :param max_connections: Maximum number of connections allowed (default: 100).
-        :return: Dictionary representing an origin.
+        :param name: Unique name for the origin server.
+        :param port: Port of the origin server (default: 443).
+        :param public_ip: Public IP address of the origin server (optional).
+        :param public_name: Public DNS name of the origin server (optional).
+        :param private_ip: Private IP address of the origin server (optional).
+        :param private_name: Private DNS name of the origin server (optional).
+        :param k8s_service: Kubernetes service reference (optional, dict with 'service_name').
+        :param custom_endpoint: Custom endpoint reference (optional, dict with 'name', 'namespace').
+        :param cbip_service: Classic BIG-IP Virtual Server name (optional).
+        :param consul_service: HashiCorp Consul service reference (optional, dict with 'service_name').
+        :param vn_private_ip: Virtual Network IP address (optional).
+        :param vn_private_name: Virtual Network DNS name (optional).
+        :param refresh_interval: DNS resolution refresh interval (default: 300 seconds).
+        :param site_locator: Site reference object (optional, dict with 'name', 'namespace').
+        :param labels: Labels to tag the origin server (optional).
+        :return: Dictionary representing an origin server.
         """
-        if not ip and not hostname:
-            raise ValueError("Either 'ip' or 'hostname' must be provided for an origin.")
+        if labels is None:
+            labels = {}
 
-        origin = {
-            "name": name,
-            "port": port,
-            "weight": weight,
-            "tls": tls_enabled,
-            "connection_timeout": connection_timeout,
-            "max_connections": max_connections,
-        }
+        origin_server = {"name": name, "labels": labels, "port": port}
 
-        if ip:
-            origin["ip"] = ip
-        if hostname:
-            origin["hostname"] = hostname
+        if public_ip:
+            origin_server["public_ip"] = {"ip": public_ip}
 
-        return origin
+        if public_name:
+            origin_server["public_name"] = {
+                "dns_name": public_name,
+                "refresh_interval": refresh_interval,
+            }
+
+        if private_ip:
+            origin_server["private_ip"] = {"ip": private_ip}
+
+        if private_name:
+            origin_server["private_name"] = {
+                "dns_name": private_name,
+                "refresh_interval": refresh_interval,
+            }
+
+        if k8s_service:
+            if not isinstance(k8s_service, dict) or "service_name" not in k8s_service:
+                raise ValueError("'k8s_service' must be a dictionary with 'service_name'.")
+            origin_server["k8s_service"] = k8s_service
+
+        if custom_endpoint:
+            if not isinstance(custom_endpoint, dict) or "name" not in custom_endpoint:
+                raise ValueError("'custom_endpoint' must be a dictionary with 'name'.")
+            origin_server["custom_endpoint_object"] = {"endpoint": custom_endpoint}
+
+        if cbip_service:
+            origin_server["cbip_service"] = {"service_name": cbip_service}
+
+        if consul_service:
+            if not isinstance(consul_service, dict) or "service_name" not in consul_service:
+                raise ValueError("'consul_service' must be a dictionary with 'service_name'.")
+            origin_server["consul_service"] = consul_service
+
+        if vn_private_ip:
+            origin_server["vn_private_ip"] = {"ip": vn_private_ip}
+
+        if vn_private_name:
+            origin_server["vn_private_name"] = {"dns_name": vn_private_name}
+
+        if site_locator:
+            if not isinstance(site_locator, dict) or "name" not in site_locator:
+                raise ValueError("'site_locator' must be a dictionary with 'name'.")
+            origin_server["site_locator"] = site_locator
+
+        return origin_server
