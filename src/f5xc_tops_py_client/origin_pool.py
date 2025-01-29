@@ -57,32 +57,18 @@ class OriginPool(Consumer):
         name: str,
         namespace: str,
         origin_servers: list,
-        port: int = 443,
-        loadbalancer_algorithm: str = "LB_OVERRIDE",
+        port: int = 443,  # Explicitly adding port at the top level
+        loadbalancer_algorithm: str = "LB_OVERRIDE",  # Changing to match working payload
         endpoint_selection: str = "LOCAL_PREFERRED",
         healthcheck: list = None,
         description: str = "",
         labels: dict = None,
         disable: bool = False,
-        same_as_endpoint_port: dict = None,
-        no_tls: dict = None,  # Added no_tls parameter
+        no_tls: dict = None,  # Adding `no_tls` parameter
+        same_as_endpoint_port: dict = None,  # Keeping but making it optional
     ):
         """
         Construct the full payload for an Origin Pool.
-
-        :param name: Name of the Origin Pool.
-        :param namespace: Namespace where the pool is created.
-        :param origin_servers: List of origin server objects.
-        :param port: Top-level port for the origin pool (default: 443).
-        :param loadbalancer_algorithm: Load balancing algorithm (default: "LB_OVERRIDE").
-        :param endpoint_selection: Endpoint selection policy (default: "LOCAL_PREFERRED").
-        :param healthcheck: List of healthcheck references (optional).
-        :param description: Description of the Origin Pool.
-        :param labels: Labels to tag the Origin Pool (optional).
-        :param disable: Whether to disable the Origin Pool (default: False).
-        :param same_as_endpoint_port: Pass `{}` if using the same port as the endpoint.
-        :param no_tls: Pass `{}` to disable TLS, or `None` to enable TLS (default: `{}`).
-        :return: Dictionary representing the Origin Pool payload.
         """
         if labels is None:
             labels = {}
@@ -90,23 +76,23 @@ class OriginPool(Consumer):
         if healthcheck is None:
             healthcheck = []
 
-        if same_as_endpoint_port is None:
-            same_as_endpoint_port = {}
-
         spec = {
             "origin_servers": [
                 {k: v for k, v in server.items() if k != "name"}
                 for server in origin_servers
             ],
-            "port": port,
+            "port": port,  # Adding `port` explicitly
             "loadbalancer_algorithm": loadbalancer_algorithm,
             "endpoint_selection": endpoint_selection,
             "healthcheck": healthcheck,
-            "same_as_endpoint_port": same_as_endpoint_port,
         }
 
-        if no_tls is not None:
-            spec["no_tls"] = no_tls
+        # Add `same_as_endpoint_port` only if explicitly provided
+        if same_as_endpoint_port is not None:
+            spec["same_as_endpoint_port"] = same_as_endpoint_port
+
+        # Ensure `no_tls` is always present as an empty object if not provided
+        spec["no_tls"] = no_tls if no_tls is not None else {}
 
         return {
             "metadata": {
