@@ -41,7 +41,7 @@ class User(Consumer):
         """
 
     @json
-    @put('/api/web/custom/namespaces/{namespace}/users_roles')
+    @put('/api/web/custom/namespaces/{namespace}/user_roles')
     def update(self, payload: Body, namespace: Path = 'system'):
         """
         Update User Roles
