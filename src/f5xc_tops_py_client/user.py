@@ -40,6 +40,14 @@ class User(Consumer):
         Use group_payload() to build Body
         """
 
+    @json
+    @put('/api/web/custom/namespaces/{namespace}/users_roles')
+    def update(self, payload: Body, namespace: Path = 'system'):
+        """
+        Update User Roles
+        Use update_payload() to build Body
+        """
+
     @staticmethod
     def create_payload(
             email: str,
@@ -84,4 +92,16 @@ class User(Consumer):
         return {
             "group_names": group_names,
             "username": user
+        }
+    
+    @staticmethod
+    def update_payload(email: str, namespace_roles: list, namespace: str = 'system'):
+        """
+        Payload for user modifications
+        *namespace_roles is being replaced
+        """
+        return {
+            "email": email,
+            "namespace": namespace,
+            "namespace_roles": namespace_roles
         }
