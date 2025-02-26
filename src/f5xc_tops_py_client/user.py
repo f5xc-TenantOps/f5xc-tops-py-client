@@ -95,14 +95,14 @@ class User(Consumer):
         }
     
     @staticmethod
-    def update_payload(email: str, namespace_roles: list, group_names: list, namespace: str = 'system'):
+    def update_payload(email: str, first_name: str, last_name: str, namespace_roles: list, group_names: list, namespace: str = 'system'):
         """
         Payload for user modifications
-        *namespace_roles are being replaced
-        *group_names are being replaced
         """
         return {
             "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
             "namespace": namespace,
             "namespace_roles": namespace_roles,
             "group_names": group_names
